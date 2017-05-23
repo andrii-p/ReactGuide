@@ -3,6 +3,9 @@ package com.example.ReactExample.dao;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Version;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 
@@ -14,6 +17,8 @@ public class Employee {
 	private String firstName;
 	private String lastName;
 	private String description;
+	
+	private @Version @JsonIgnore Long version;
 
 	private Employee() {}
 
