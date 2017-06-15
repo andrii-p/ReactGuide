@@ -58,7 +58,7 @@
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 		
-		<!-- ROME DEPENDENCIES -->
+		<!-- ROME & JDOM DEPENDENCIES -->
 		<dependency>
 		    <groupId>com.rometools</groupId>
 		    <artifactId>rome</artifactId>
