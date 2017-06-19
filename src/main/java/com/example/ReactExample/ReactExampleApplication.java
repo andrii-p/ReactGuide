@@ -19,7 +19,7 @@ public class ReactExampleApplication {
 			System.out.println("NO ARGUMENT");
 		} else {
 			try {				
-				URL url = new URL(args[0]);
+				URL url = new URL("https://denver.craigslist.org/search/cto?format=rss");
 				
 				System.out.println("READING URL - " + url);
 				

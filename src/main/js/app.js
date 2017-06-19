@@ -5,11 +5,11 @@ const ReactDOM = require('react-dom')
 const when = require('when');
 const client = require('./client');
 
-const follow = require('./follow');
+const follow = require('./follow'); // function to hop multiple links by "rel"
 
 const stompClient = require('./websocket-listener');
 
-const root = '/api'
+const root = '/api';
 
 class App extends React.Component {
 
@@ -24,21 +24,36 @@ class App extends React.Component {
 		this.refreshCurrentPage = this.refreshCurrentPage.bind(this);
 		this.refreshAndGoToLastPage = this.refreshAndGoToLastPage.bind(this);
 	}
-	
+
 	loadFromServer(pageSize) {
 		follow(client, root, [
-			{rel: 'employees', params: {size: pageSize}}]
+				{rel: 'employees', params: {size: pageSize}}]
 		).then(employeeCollection => {
-			return client({
-				method: 'GET',
-				path: employeeCollection.entity._links.profile.href,
-				headers: {'Accept': 'application/schema+json'}
-			}).then(schema => {
-				this.schema = schema.entity;
-				this.links = employeeCollection.entity._links;
-				return employeeCollection;
-			});
+				return client({
+					method: 'GET',
+					path: employeeCollection.entity._links.profile.href,
+					headers: {'Accept': 'application/schema+json'}
+				}).then(schema => {
+				    /**
+                     * Filter unneeded JSON Schema properties, like uri references and
+                     * subtypes ($ref).
+                     */
+                    Object.keys(schema.entity.properties).forEach(function (property) {
+                        if (schema.entity.properties[property].hasOwnProperty('format') &&
+                            schema.entity.properties[property].format === 'uri') {
+                            delete schema.entity.properties[property];
+                        }
+                        else if (schema.entity.properties[property].hasOwnProperty('$ref')) {
+                            delete schema.entity.properties[property];
+                        }
+                    });
+
+					this.schema = schema.entity;
+					this.links = employeeCollection.entity._links;
+					return employeeCollection;
+				});
 		}).then(employeeCollection => {
+			this.page = employeeCollection.entity.page;
 			return employeeCollection.entity._embedded.employees.map(employee =>
 					client({
 						method: 'GET',
@@ -57,9 +72,10 @@ class App extends React.Component {
 			});
 		});
 	}
-	
+
+	// tag::on-create[]
 	onCreate(newEmployee) {
-		follow(client, root, ['employees']).then(response => {
+		follow(client, root, ['employees']).done(response => {
 			client({
 				method: 'POST',
 				path: response.entity._links.self.href,
@@ -68,7 +84,8 @@ class App extends React.Component {
 			})
 		})
 	}
-	
+	// end::on-create[]
+
 	onUpdate(employee, updatedEmployee) {
 		client({
 			method: 'PUT',
@@ -81,17 +98,27 @@ class App extends React.Component {
 		}).done(response => {
 			/* Let the websocket handler update the state */
 		}, response => {
+		    if (response.status.code === 403) {
+                alert('ACCESS DENIED: You are not authorized to update ' +
+                    employee.entity._links.self.href);
+            }
 			if (response.status.code === 412) {
-				alert('DENIED: Unable to update ' +
-					employee.entity._links.self.href + '. Your copy is stale.');
+				alert('DENIED: Unable to update ' + employee.entity._links.self.href + '. Your copy is stale.');
 			}
 		});
 	}
-	
+
 	onDelete(employee) {
-		client({method: 'DELETE', path: employee.entity._links.self.href});
+		client({method: 'DELETE', path: employee.entity._links.self.href}
+		).done(response => {/* let the websocket handle updating the UI */},
+        	response => {
+        		if (response.status.code === 403) {
+        			alert('ACCESS DENIED: You are not authorized to delete ' +
+        				employee.entity._links.self.href);
+        		}
+        	});
 	}
-	
+
 	onNavigate(navUri) {
 		client({
 			method: 'GET',
@@ -118,13 +145,14 @@ class App extends React.Component {
 			});
 		});
 	}
-	
+
 	updatePageSize(pageSize) {
 		if (pageSize !== this.state.pageSize) {
 			this.loadFromServer(pageSize);
 		}
 	}
-	
+
+	// tag::websocket-handlers[]
 	refreshAndGoToLastPage(message) {
 		follow(client, root, [{
 			rel: 'employees',
@@ -167,21 +195,24 @@ class App extends React.Component {
 			});
 		});
 	}
-	
+	// end::websocket-handlers[]
+
+	// tag::register-handlers[]
 	componentDidMount() {
 		this.loadFromServer(this.state.pageSize);
 		stompClient.register([
-      		{route: '/topic/newEmployee', callback: this.refreshAndGoToLastPage},
-      		{route: '/topic/updateEmployee', callback: this.refreshCurrentPage},
-      		{route: '/topic/deleteEmployee', callback: this.refreshCurrentPage}
-      	]);
+			{route: '/topic/newEmployee', callback: this.refreshAndGoToLastPage},
+			{route: '/topic/updateEmployee', callback: this.refreshCurrentPage},
+			{route: '/topic/deleteEmployee', callback: this.refreshCurrentPage}
+		]);
 	}
+	// end::register-handlers[]
 
 	render() {
 		return (
 			<div>
 				<CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
-				<EmployeeList page={this.state.page} 
+				<EmployeeList page={this.state.page}
 							  employees={this.state.employees}
 							  links={this.state.links}
 							  pageSize={this.state.pageSize}
@@ -209,23 +240,18 @@ class CreateDialog extends React.Component {
 			newEmployee[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
 		});
 		this.props.onCreate(newEmployee);
-
-		// clear out the dialog's inputs
 		this.props.attributes.forEach(attribute => {
-			ReactDOM.findDOMNode(this.refs[attribute]).value = '';
+			ReactDOM.findDOMNode(this.refs[attribute]).value = ''; // clear out the dialog's inputs
 		});
-
-		// Navigate away from the dialog to hide it.
 		window.location = "#";
 	}
 
 	render() {
 		var inputs = this.props.attributes.map(attribute =>
-			<p key={attribute}>
-				<input type="text" placeholder={attribute} ref={attribute} className="field" />
-			</p>
+				<p key={attribute}>
+					<input type="text" placeholder={attribute} ref={attribute} className="field" />
+				</p>
 		);
-
 		return (
 			<div>
 				<a href="#createEmployee">Create</a>
@@ -245,7 +271,6 @@ class CreateDialog extends React.Component {
 			</div>
 		)
 	}
-
 }
 
 class UpdateDialog extends React.Component {
@@ -277,8 +302,9 @@ class UpdateDialog extends React.Component {
 		var dialogId = "updateEmployee-" + this.props.employee.entity._links.self.href;
 
 		return (
-			<div key={this.props.employee.entity._links.self.href}>
+			<div>
 				<a href={"#" + dialogId}>Update</a>
+
 				<div id={dialogId} className="modalDialog">
 					<div>
 						<a href="#" title="Close" className="close">X</a>
@@ -297,8 +323,8 @@ class UpdateDialog extends React.Component {
 
 }
 
-class EmployeeList extends React.Component{
-	
+class EmployeeList extends React.Component {
+
 	constructor(props) {
 		super(props);
 		this.handleNavFirst = this.handleNavFirst.bind(this);
@@ -307,19 +333,18 @@ class EmployeeList extends React.Component{
 		this.handleNavLast = this.handleNavLast.bind(this);
 		this.handleInput = this.handleInput.bind(this);
 	}
-	
+
 	handleInput(e) {
 		e.preventDefault();
 		var pageSize = ReactDOM.findDOMNode(this.refs.pageSize).value;
 		if (/^[0-9]+$/.test(pageSize)) {
 			this.props.updatePageSize(pageSize);
 		} else {
-			ReactDOM.findDOMNode(this.refs.pageSize).value =
-				pageSize.substring(0, pageSize.length - 1);
+			ReactDOM.findDOMNode(this.refs.pageSize).value = pageSize.substring(0, pageSize.length - 1);
 		}
 	}
-	
-	handleNavFirst(e){
+
+	handleNavFirst(e) {
 		e.preventDefault();
 		this.props.onNavigate(this.props.links.first.href);
 	}
@@ -338,17 +363,17 @@ class EmployeeList extends React.Component{
 		e.preventDefault();
 		this.props.onNavigate(this.props.links.last.href);
 	}
-	
-	render() {		
+
+	render() {
 		var pageInfo = this.props.page.hasOwnProperty("number") ?
-				<h3>Employees - Page {this.props.page.number + 1} of {this.props.page.totalPages}</h3> : null;
-				
+			<h3>Employees - Page {this.props.page.number + 1} of {this.props.page.totalPages}</h3> : null;
+
 		var employees = this.props.employees.map(employee =>
-				<Employee key={employee.entity._links.self.href}
-						  employee={employee}
-						  attributes={this.props.attributes}
-						  onUpdate={this.props.onUpdate}
-						  onDelete={this.props.onDelete}/>
+			<Employee key={employee.entity._links.self.href}
+					  employee={employee}
+					  attributes={this.props.attributes}
+					  onUpdate={this.props.onUpdate}
+					  onDelete={this.props.onDelete}/>
 		);
 
 		var navLinks = [];
@@ -375,6 +400,7 @@ class EmployeeList extends React.Component{
 							<th>First Name</th>
 							<th>Last Name</th>
 							<th>Description</th>
+							<th></th>
 							<th></th>
 						</tr>
 						{employees}
@@ -405,6 +431,7 @@ class Employee extends React.Component {
 				<td>{this.props.employee.entity.firstName}</td>
 				<td>{this.props.employee.entity.lastName}</td>
 				<td>{this.props.employee.entity.description}</td>
+				<td>{this.props.employee.entity.manager.name}</td>
 				<td>
 					<UpdateDialog employee={this.props.employee}
 								  attributes={this.props.attributes}
@@ -419,6 +446,6 @@ class Employee extends React.Component {
 }
 
 ReactDOM.render(
-		<App />,
-		document.getElementById('react')
+	<App />,
+	document.getElementById('react')
 )
