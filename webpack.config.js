@@ -3,15 +3,10 @@ var path = require('path');
 var node_dir = __dirname + '/node_modules';
 
 module.exports = {
-    entry: './src/main/js/app.js',
+    entry: './src/main/js/index.js',
     devtool: 'sourcemaps',
     cache: true,
     debug: true,
-    resolve: {
-        alias: {
-            'stompjs': node_dir + '/stompjs/lib/stomp.js',
-        }
-    },
     output: {
         path: __dirname,
         filename: './src/main/resources/static/built/bundle.js'
@@ -26,6 +21,7 @@ module.exports = {
                     cacheDirectory: true,
                     presets: ['es2015', 'react']
                 }
+
             }
         ]
     }
