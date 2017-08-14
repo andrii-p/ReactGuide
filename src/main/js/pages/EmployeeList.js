@@ -1,4 +1,5 @@
 import React from "react";
+import { IndexLink, Link } from "react-router";
 
 const root = '/api'
 
@@ -46,6 +47,7 @@ export default class EmployeeList extends React.Component {
 							<th>First Name</th>
 							<th>Last Name</th>
 							<th>Description</th>
+							<th>Details</th>
 						</tr>
 						{employees}
 					</tbody>
@@ -62,11 +64,15 @@ export class EmployeeRow extends React.Component {
 	}
 	
 	render() {
+		var selfLink = this.props.employee._links.self.href;
+		var employeeId = /\/\d+$/gi;
+		var employeeUrl = "employees/" + selfLink.match(employeeId);
 		return (
 			<tr>
 				<td>{this.props.employee.firstName}</td>
 				<td>{this.props.employee.lastName}</td>
 				<td>{this.props.employee.description}</td>
+				<td><Link className="btn-success" to={employeeUrl}>Go to details</Link></td>
 			</tr>
 		)
 	}

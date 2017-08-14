@@ -64,9 +64,9 @@
 	
 	var _EmployeeList2 = _interopRequireDefault(_EmployeeList);
 	
-	var _Main = __webpack_require__(208);
+	var _Layout = __webpack_require__(208);
 	
-	var _Main2 = _interopRequireDefault(_Main);
+	var _Layout2 = _interopRequireDefault(_Layout);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -77,9 +77,9 @@
 		{ history: _reactRouter.hashHistory },
 		_react2.default.createElement(
 			_reactRouter.Route,
-			{ path: "/", component: _Main2.default },
+			{ path: "/", component: _Layout2.default },
 			_react2.default.createElement(_reactRouter.IndexRoute, { component: _EmployeeList2.default }),
-			_react2.default.createElement(_reactRouter.Route, { path: "employee", name: "employee", component: _Employee2.default })
+			_react2.default.createElement(_reactRouter.Route, { path: "employees/:employeeId", name: "employee", component: _Employee2.default })
 		)
 	), app);
 
@@ -24142,10 +24142,10 @@
 	var Employee = function (_React$Component) {
 		_inherits(Employee, _React$Component);
 	
-		function Employee() {
+		function Employee(props) {
 			_classCallCheck(this, Employee);
 	
-			return _possibleConstructorReturn(this, (Employee.__proto__ || Object.getPrototypeOf(Employee)).apply(this, arguments));
+			return _possibleConstructorReturn(this, (Employee.__proto__ || Object.getPrototypeOf(Employee)).call(this, props));
 		}
 	
 		_createClass(Employee, [{
@@ -24158,6 +24158,12 @@
 						"h2",
 						null,
 						"Employee Details"
+					),
+					_react2.default.createElement(
+						"div",
+						null,
+						"Employee ID - ",
+						this.props.params.employeeId
 					)
 				);
 			}
@@ -24172,7 +24178,7 @@
 /* 207 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 		value: true
@@ -24184,6 +24190,8 @@
 	var _react = __webpack_require__(1);
 	
 	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactRouter = __webpack_require__(159);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -24209,12 +24217,12 @@
 		}
 	
 		_createClass(EmployeeList, [{
-			key: 'componentDidMount',
+			key: "componentDidMount",
 			value: function componentDidMount() {
 				this.loadFromServer();
 			}
 		}, {
-			key: 'loadFromServer',
+			key: "loadFromServer",
 			value: function loadFromServer() {
 				var _this2 = this;
 	
@@ -24234,43 +24242,48 @@
 				});
 			}
 		}, {
-			key: 'render',
+			key: "render",
 			value: function render() {
 				var employees = this.state.employees.map(function (employee) {
 					return _react2.default.createElement(EmployeeRow, { key: employee._links.self.href, employee: employee });
 				});
 	
 				return _react2.default.createElement(
-					'div',
+					"div",
 					null,
 					_react2.default.createElement(
-						'h1',
+						"h1",
 						null,
-						'Employee List'
+						"Employee List"
 					),
 					_react2.default.createElement(
-						'table',
+						"table",
 						null,
 						_react2.default.createElement(
-							'tbody',
+							"tbody",
 							null,
 							_react2.default.createElement(
-								'tr',
+								"tr",
 								null,
 								_react2.default.createElement(
-									'th',
+									"th",
 									null,
-									'First Name'
+									"First Name"
 								),
 								_react2.default.createElement(
-									'th',
+									"th",
 									null,
-									'Last Name'
+									"Last Name"
 								),
 								_react2.default.createElement(
-									'th',
+									"th",
 									null,
-									'Description'
+									"Description"
+								),
+								_react2.default.createElement(
+									"th",
+									null,
+									"Details"
 								)
 							),
 							employees
@@ -24295,25 +24308,37 @@
 		}
 	
 		_createClass(EmployeeRow, [{
-			key: 'render',
+			key: "render",
 			value: function render() {
+				var selfLink = this.props.employee._links.self.href;
+				var employeeId = /\/\d+$/gi;
+				var employeeUrl = "employees/" + selfLink.match(employeeId);
 				return _react2.default.createElement(
-					'tr',
+					"tr",
 					null,
 					_react2.default.createElement(
-						'td',
+						"td",
 						null,
 						this.props.employee.firstName
 					),
 					_react2.default.createElement(
-						'td',
+						"td",
 						null,
 						this.props.employee.lastName
 					),
 					_react2.default.createElement(
-						'td',
+						"td",
 						null,
 						this.props.employee.description
+					),
+					_react2.default.createElement(
+						"td",
+						null,
+						_react2.default.createElement(
+							_reactRouter.Link,
+							{ className: "btn-success", to: employeeUrl },
+							"Go to details"
+						)
 					)
 				);
 			}
@@ -24351,16 +24376,16 @@
 	
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 	
-	var Main = function (_React$Component) {
-		_inherits(Main, _React$Component);
+	var Layout = function (_React$Component) {
+		_inherits(Layout, _React$Component);
 	
-		function Main(props) {
-			_classCallCheck(this, Main);
+		function Layout(props) {
+			_classCallCheck(this, Layout);
 	
-			return _possibleConstructorReturn(this, (Main.__proto__ || Object.getPrototypeOf(Main)).call(this, props));
+			return _possibleConstructorReturn(this, (Layout.__proto__ || Object.getPrototypeOf(Layout)).call(this, props));
 		}
 	
-		_createClass(Main, [{
+		_createClass(Layout, [{
 			key: "render",
 			value: function render() {
 				var location = this.props.location;
@@ -24368,6 +24393,15 @@
 				var containerStyle = {
 					marginTop: "60px"
 				};
+	
+				console.log("this.props:");
+				console.log(this.props);
+	
+				var params = this.props.params;
+	
+	
+				console.log("{params}:");
+				console.log(params);
 	
 				return _react2.default.createElement(
 					"div",
@@ -24382,10 +24416,10 @@
 			}
 		}]);
 	
-		return Main;
+		return Layout;
 	}(_react2.default.Component);
 	
-	exports.default = Main;
+	exports.default = Layout;
 
 /***/ }),
 /* 209 */

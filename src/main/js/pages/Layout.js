@@ -2,7 +2,7 @@ import React from "react";
 
 import Navigation from "../components/Navigation";
 
-export default class Main extends React.Component {
+export default class Layout extends React.Component {
 	
 	constructor(props) {
 		super(props);
@@ -13,6 +13,15 @@ export default class Main extends React.Component {
 		const containerStyle = {
 	      marginTop: "60px"
 	    };
+		
+		console.log("this.props:");
+		console.log(this.props);
+		
+		const {params} = this.props;
+		
+		console.log("{params}:");
+		console.log(params);
+		
 		
 		return (
 			<div>
