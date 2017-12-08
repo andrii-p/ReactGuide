@@ -24311,8 +24311,8 @@
 			key: "render",
 			value: function render() {
 				var selfLink = this.props.employee._links.self.href;
-				var employeeId = /\/\d+$/gi;
-				var employeeUrl = "employees/" + selfLink.match(employeeId);
+				var employeeId = /\/\d+$/gi; //e.g. "http://localhost:8080/api/employees/1" captures /1
+				var employeeUrl = "employees" + selfLink.match(employeeId); //e.g. employees/1
 				return _react2.default.createElement(
 					"tr",
 					null,
