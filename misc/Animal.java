@@ -16,7 +16,7 @@ public class Animal {
     }
 
     private boolean isOneNullOtherNotNull(Object x, Object y){
-        return (x == null && y != null) || (x != null && y == null);
+        return x == null ^ y == null;
     }
 
     private boolean isFirstNotEqualsSecond(Object first, Object second){
