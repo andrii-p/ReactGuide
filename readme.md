@@ -11,3 +11,7 @@ https://madebymany.com/stories/beyond-the-to-do-app-writing-complex-applications
 https://themeteorchef.com/tutorials/single-page-applications-with-react-router
 https://github.com/themeteorchef/base/tree/master/imports
 
+Spring security guides:
+http://www.baeldung.com/security-spring
+http://www.baeldung.com/spring-security-authentication-and-registration
+
